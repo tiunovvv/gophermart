@@ -1,0 +1,22 @@
+BEGIN TRANSACTION;
+
+CREATE TABLE IF NOT EXISTS users(
+    user_id VARCHAR(200) NOT NULL,
+    login TEXT NOT NULL UNIQUE,
+    pswd_hash TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users_orders(
+    number VARCHAR(200) NOT NULL UNIQUE,
+    user_id VARCHAR(200) NOT NULL,
+    uploaded_at VARCHAR(25) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users_withdraw(
+    number VARCHAR(200) NOT NULL UNIQUE,
+    user_id VARCHAR(200) NOT NULL,
+    sum NUMERIC(10, 2),
+    processed_at VARCHAR(25) NOT NULL
+);
+
+COMMIT;
