@@ -8,18 +8,18 @@ import (
 )
 
 type queryTracer struct {
-	log *zap.Logger
+	log *zap.SugaredLogger
 }
 
-func NewQueryTracer(logger *zap.Logger) *queryTracer {
+func newQueryTracer(logger *zap.SugaredLogger) *queryTracer {
 	return &queryTracer{logger}
 }
 
 func (t *queryTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
-	t.log.Sugar().Infof("Running query %s (%v)", data.SQL, data.Args)
+	t.log.Infof("Running query %s (%v)", data.SQL, data.Args)
 	return ctx
 }
 
 func (t *queryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, data pgx.TraceQueryEndData) {
-	t.log.Sugar().Infof("%v", data.CommandTag)
+	t.log.Infof("%v", data.CommandTag)
 }

@@ -2,7 +2,7 @@ package mart
 
 import "strconv"
 
-func (m *Mart) CheckLuhnAlgorithm(cardNumber string) bool {
+func (m *Mart) CheckLunaAlgorithm(cardNumber string) bool {
 	const (
 		digitsCount = 9
 		shift       = 2

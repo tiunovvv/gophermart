@@ -17,7 +17,7 @@ type OrderWithTime struct {
 	UploadedAt time.Time `json:"uploaded_at"`
 	Number     string    `json:"number"`
 	Status     string    `json:"status"`
-	Accrual    float64   `json:"accrual"`
+	Accrual    float64   `json:"accrual,omitempty"`
 }
 
 type Balance struct {

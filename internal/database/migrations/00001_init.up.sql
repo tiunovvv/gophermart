@@ -2,12 +2,14 @@ BEGIN TRANSACTION;
 
 CREATE TABLE IF NOT EXISTS users(
     user_id VARCHAR(200) NOT NULL,
-    login TEXT NOT NULL UNIQUE,
-    pswd_hash TEXT NOT NULL
+    login VARCHAR(200) NOT NULL UNIQUE,
+    pswd_hash VARCHAR(200) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS users_orders(
     number VARCHAR(200) NOT NULL UNIQUE,
+    status VARCHAR(50) NOT NULL,
+    accrual NUMERIC(10, 2),
     user_id VARCHAR(200) NOT NULL,
     uploaded_at VARCHAR(25) NOT NULL
 );
@@ -15,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users_orders(
 CREATE TABLE IF NOT EXISTS users_withdraw(
     number VARCHAR(200) NOT NULL UNIQUE,
     user_id VARCHAR(200) NOT NULL,
-    sum NUMERIC(10, 2),
+    sum NUMERIC(10, 2) NOT NULL,
     processed_at VARCHAR(25) NOT NULL
 );
 

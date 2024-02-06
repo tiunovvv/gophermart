@@ -20,7 +20,7 @@ func (w *bodyLogWriter) Write(b []byte) (int, error) {
 	return size, fmt.Errorf("failed to calculate size: %w", err)
 }
 
-func GinLogger(log *zap.Logger) gin.HandlerFunc {
+func GinLogger(log *zap.SugaredLogger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 
@@ -29,12 +29,12 @@ func GinLogger(log *zap.Logger) gin.HandlerFunc {
 		c.Next()
 		duration := time.Since(start)
 
-		log.Info("Request:",
-			zap.String("URI", c.Request.RequestURI),
-			zap.String("Method", c.Request.Method),
-			zap.String("StatusCode", strconv.Itoa(c.Writer.Status())),
-			zap.String("Duration", duration.String()),
-			zap.String("Size", strconv.Itoa(blw.size)),
+		log.Infow("Request:",
+			"URI", c.Request.RequestURI,
+			"Method", c.Request.Method,
+			"StatusCode", strconv.Itoa(c.Writer.Status()),
+			"Duration", duration.String(),
+			"Size", strconv.Itoa(blw.size),
 		)
 	}
 }

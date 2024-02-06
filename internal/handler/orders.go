@@ -1,27 +1,29 @@
 package handler
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tiunovvv/gophermart/internal/config"
 	"github.com/tiunovvv/gophermart/internal/mart"
-	"github.com/tiunovvv/gophermart/internal/models"
 	"go.uber.org/zap"
+
+	myErrors "github.com/tiunovvv/gophermart/internal/errors"
 )
 
 type Handler struct {
-	config *config.Config
-	mart   *mart.Mart
-	logger *zap.Logger
+	cfg  *config.Config
+	mart *mart.Mart
+	log  *zap.SugaredLogger
 }
 
-func NewHandler(config *config.Config, mart *mart.Mart, logger *zap.Logger) *Handler {
+func NewHandler(cfg *config.Config, mart *mart.Mart, log *zap.SugaredLogger) *Handler {
 	return &Handler{
-		config: config,
-		mart:   mart,
-		logger: logger,
+		cfg:  cfg,
+		mart: mart,
+		log:  log,
 	}
 }
 
@@ -35,31 +37,37 @@ func (h *Handler) SaveOrder(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
+
 	number := string(body)
-	if !h.mart.CheckLuhnAlgorithm(number) {
+	if !h.mart.CheckLunaAlgorithm(number) {
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
 		return
 	}
+
 	userID := h.getUserID(c)
 	if len(userID) == 0 {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	userIDDB, err := h.mart.GetUserIDForOrder(c, number)
+
+	err = h.mart.SaveOrder(c, userID, number)
+
+	if errors.Is(err, myErrors.ErrOrderSavedByThisUser) {
+		c.Status(http.StatusOK)
+		return
+	}
+
+	if errors.Is(err, myErrors.ErrOrderSavedByOtherUser) {
+		c.AbortWithStatus(http.StatusConflict)
+		return
+	}
+
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-	if userIDDB == userID {
-		c.AbortWithStatus(http.StatusOK)
-		return
-	}
-	if len(userIDDB) != 0 {
-		c.AbortWithStatus(http.StatusConflict)
-		return
-	}
-	h.mart.SaveOrder(c, userID, number)
-	c.AbortWithStatus(http.StatusAccepted)
+
+	c.Status(http.StatusAccepted)
 }
 
 func (h *Handler) GetOrders(c *gin.Context) {
@@ -68,30 +76,31 @@ func (h *Handler) GetOrders(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	numbers, err := h.mart.GetNumbersForUser(c, userID)
+
+	orders, err := h.mart.GetOrdersForUser(c, userID)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	if len(numbers) == 0 {
+	if len(orders) == 0 {
 		c.AbortWithStatus(http.StatusNoContent)
 		return
 	}
+	c.JSON(http.StatusOK, orders)
+}
 
-	orders := make([]models.OrderWithTime, 0)
-	for number, time := range numbers {
-		order, err := h.mart.GetOrderInfo(h.config.AccrualSystemAddress, number)
-		if err != nil {
-			h.logger.Sugar().Errorf("failed to get info about order: %s, %w", number, err)
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-		if len(order.Number) == 0 {
-			order.Number = number
-		}
-		order.UploadedAt = time
-		orders = append(orders, order)
+func (h *Handler) GetBalance(c *gin.Context) {
+	userID := h.getUserID(c)
+	if len(userID) == 0 {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
 	}
-	c.AbortWithStatusJSON(http.StatusOK, orders)
+
+	balance, err := h.mart.GetBalance(c, userID)
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	c.JSON(http.StatusOK, balance)
 }
