@@ -32,21 +32,20 @@ func (w *Worker) Start(
 ) {
 	defer wg.Done()
 	for order := range w.OrdersChan {
-		order, errAcc := w.getOrder(log, cfg.AccrualSystemAddress, order.Number)
+		order, err := w.getOrder(log, cfg.AccrualSystemAddress, order.Number)
 
-		if errors.Is(errAcc.error, errTooManyRequests) {
-			log.Errorf("failed get info about order %s from accrual: %w", order.Order, errAcc.error)
-			w.ErrorChan <- errAcc
+		if errors.Is(err.error, errTooManyRequests) {
+			log.Errorf("failed get info about order %s from accrual: %w", order.Order, err.error)
+			w.ErrorChan <- err
 			return
 		}
 
-		if errAcc.error != nil {
-			log.Errorf("failed get info about order %s from accrual: %w", order.Order, errAcc.error)
+		if err.error != nil {
+			log.Errorf("failed get info about order %s from accrual: %w", order.Order, err.error)
 			return
 		}
 
-		err := mart.UpdateOrderAccrual(ctx, order)
-		if err != nil {
+		if err := mart.UpdateOrderAccrual(ctx, order); err != nil {
 			log.Errorf("failed to update order %s", order.Order)
 			return
 		}

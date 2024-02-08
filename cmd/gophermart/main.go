@@ -68,7 +68,7 @@ func run() error {
 	disp := accrual.NewDispatcher(cfg, mart, log, workerCount)
 	go disp.Start(ctx)
 
-	watch(ctx, wg, db, disp)
+	watch(ctx, wg, db)
 
 	h := handler.NewHandler(cfg, mart, log)
 	srv := server.InitServer(h, cfg, logger)
@@ -87,7 +87,7 @@ func run() error {
 	return nil
 }
 
-func watch(ctx context.Context, wg *sync.WaitGroup, db *database.DB, disp *accrual.Dispatcher) {
+func watch(ctx context.Context, wg *sync.WaitGroup, db *database.DB) {
 	wg.Add(1)
 	go func() {
 		defer log.Print("closed DB and stoped Dispatcher")
@@ -96,7 +96,6 @@ func watch(ctx context.Context, wg *sync.WaitGroup, db *database.DB, disp *accru
 		<-ctx.Done()
 
 		db.Close()
-		disp.Stop()
 	}()
 }
 

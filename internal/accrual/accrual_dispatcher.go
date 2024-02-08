@@ -37,7 +37,7 @@ func NewDispatcher(cfg *config.Config, mart *mart.Mart, log *zap.SugaredLogger, 
 }
 
 func (d *Dispatcher) Start(ctx context.Context) {
-	d.ordersChan = make(chan models.OrderWithTime)
+	d.ordersChan = make(chan models.OrderWithTime, d.workerCount)
 	d.errorChan = make(chan accrualError)
 	defer close(d.ordersChan)
 	defer close(d.errorChan)
@@ -68,15 +68,13 @@ func (d *Dispatcher) Start(ctx context.Context) {
 			select {
 			case err := <-d.errorChan:
 				d.log.Errorf("pausing workers for %s seconds\n", err.timeout)
-				time.Sleep(time.Duration(err.timeout))
+				pauseCtx, cancel := context.WithTimeout(ctx, time.Duration(err.timeout)*time.Second)
+				pauseCtx.Done()
+				cancel()
 			default:
 			}
 			time.Sleep(time.Second)
 		}
 	}()
 	wg.Wait()
-}
-
-func (d *Dispatcher) Stop() {
-
 }
