@@ -23,3 +23,24 @@ git fetch template && git checkout template/master .github
 ```
 
 Затем добавьте полученные изменения в свой репозиторий.
+
+Запуск:
+```
+go run cmd/gophermart/main.go -d="postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable"
+```
+```
+cmd/accrual/accrual_linux_amd64 -a="localhost:8000" -d="postgres://postgres:postgres@localhost:5432/praktikum?sslmode=disable"
+```
+
+Тест:
+```
+gophermarttest -test.v -test.run=^TestGophermart$ \
+            -gophermart-binary-path=cmd/gophermart/gophermart \
+            -gophermart-host=localhost \
+            -gophermart-port=8080 \
+            -gophermart-database-uri="postgresql://postgres:postgres@localhost/praktikum?sslmode=disable" \
+            -accrual-binary-path=cmd/accrual/accrual_linux_amd64 \
+            -accrual-host=localhost \
+            -accrual-port=8000 \
+            -accrual-database-uri="postgresql://postgres:postgres@localhost/praktikum?sslmode=disable"
+```
